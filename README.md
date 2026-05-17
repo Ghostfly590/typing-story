@@ -1,3 +1,15 @@
+# Project Background
+
+This project aims to build a web application for kids who need to practice keyboard typing. The idea is to use LLMs (Language Models) to generate stories for different age groups and upload them to the `stories` folder in this repository.
+
+The application will have a user interface that displays one story at a time. Kids can type on their keyboards to match the words in the story. Here are the key features:
+
+- **Default Font Color:** Black
+- **Correct Typing:** When typing is correct, the letter turns green and moves to the next letter.
+- **Incorrect Typing:** If a letter is typed incorrectly, it will be highlighted until it has been corrected.
+
+The goal is to engage kids in interactive learning through storytelling while improving their keyboard skills.
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

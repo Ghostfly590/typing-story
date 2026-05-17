@@ -65,6 +65,11 @@
   border: 3px dashed rgba(255,130,100,0.25);
 }
 
+.word-container {
+  display: inline-block;
+  white-space: nowrap;
+}
+
 .char { 
   display: inline-block;
   transition: transform 160ms ease, color 120ms ease;

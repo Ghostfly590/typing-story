@@ -119,19 +119,54 @@ const TypingPage = () => {
         <p className="hint">Type the story below — have fun! Backspace fixes mistakes.</p>
 
         <div className="story-area">
-          {Array.from(storyText).map((char, index) => {
-            const isTyped = index < input.length;
-            const isCorrect = isTyped && input[index] === char;
-            const isLast = index === lastTypedIndex;
-            const classes = ['char'];
-            if (isTyped) classes.push(isCorrect ? 'char-correct' : 'char-wrong');
-            if (isLast && lastTypedIndex !== null) classes.push('char-flash');
+          {storyText.split(/(\s+)/).map((segment, wordIndex) => {
+            // Determine the starting global index of this specific word/space segment
+            const segmentStartIndex = storyText.split(/(\s+)/)
+                .slice(0, wordIndex)
+                .reduce((sum, seg) => sum + seg.length, 0);
+
+            // If the segment is whitespace, render it normally
+            if (segment.trim() === '') {
+                return Array.from(segment).map((char, charIndex) => {
+                const globalIndex = segmentStartIndex + charIndex;
+                const isTyped = globalIndex < input.length;
+                const isCorrect = isTyped && input[globalIndex] === char;
+                const isLast = globalIndex === lastTypedIndex;
+                
+                const classes = ['char'];
+                if (isTyped) classes.push(isCorrect ? 'char-correct' : 'char-wrong');
+                if (isLast && lastTypedIndex !== null) classes.push('char-flash');
+
+                return (
+                    <span key={`space-${globalIndex}`} className={classes.join(' ')}>
+                    {'\u00A0'}
+                    </span>
+                );
+                });
+            }
+
+            // If the segment is a word, wrap its character spans in a word container
             return (
-                <span key={index} className={classes.join(' ')}>
-                  {char === ' ' ? '\u00A0' : char}
+                <span key={`word-${wordIndex}`} className="word-container">
+                {Array.from(segment).map((char, charIndex) => {
+                    const globalIndex = segmentStartIndex + charIndex;
+                    const isTyped = globalIndex < input.length;
+                    const isCorrect = isTyped && input[globalIndex] === char;
+                    const isLast = globalIndex === lastTypedIndex;
+                    
+                    const classes = ['char'];
+                    if (isTyped) classes.push(isCorrect ? 'char-correct' : 'char-wrong');
+                    if (isLast && lastTypedIndex !== null) classes.push('char-flash');
+
+                    return (
+                    <span key={`char-${globalIndex}`} className={classes.join(' ')}>
+                        {char}
+                    </span>
+                    );
+                })}
                 </span>
             );
-          })}
+            })}
         </div>
 
         {finishedAt && (

@@ -1,7 +1,11 @@
 const stories = [
   {
-    filename: 's-10-2026-05-17.txt',
-    content: `Once upon a time, in a small village, there was a curious boy named Timmy. Every day after school, he would explore the nearby forest with his imaginary friend, Benny the Bear. One sunny afternoon, they stumbled upon an old, hidden treehouse. Excitedly, they climbed inside and found a magical treasure chest. Inside, they discovered enchanted toys that made their adventures even more exciting! From that day on, Timmy and Benny visited the treehouse every chance they got, creating countless happy memories.`,
+    filename: 's-10-The-Midnight-Arcade.txt',
+    content: `Leo found a glowing token in his cereal box. At midnight, his closet transformed into a retro arcade. Every game he played rewrote reality. He achieved the high score in "Galactic Defender," and woke up to find a real, shiny silver spaceship parked quietly on his front lawn.`,
+  },
+  {
+    filename: 's-10-The-Secret-Safari.txt',
+    content: `Sam adjusted his rusty telescope and gasped. The neighborhood stray cats were wearing tiny, golden pharaoh crowns. They marched in perfect formation into the storm drain, carrying miniature maps. Sam grabbed his flashlight, realized his boring street was actually a hidden jungle kingdom, and quickly followed them inside.`,
   },
 ];
 

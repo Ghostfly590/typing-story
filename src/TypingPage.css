@@ -1,0 +1,94 @@
+.typing-page-root {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+}
+
+.typing-card {
+  background: url('/'); /* fallback */
+  background-color: #fff6e6;
+  border: 6px solid #ffd27f;
+  border-radius: 20px;
+  padding: 28px;
+  width: 100%;
+  max-width: 920px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+}
+
+.title {
+  font-family: 'Baloo 2', 'Comic Sans MS', 'Marker Felt', sans-serif;
+  font-size: 2.4rem;
+  margin: 0 0 8px 0;
+  color: #ff6b6b;
+  text-align: center;
+  text-shadow: 0 2px 0 #ffdede;
+}
+
+.status-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.controls-row { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.action-row { display:flex; gap:10px; align-items:center; }
+
+.kid-btn { background: linear-gradient(180deg,#fffae6 0%, #fff1d6 100%); border: 2px solid #ffb86b; padding: 8px 14px; border-radius: 12px; font-size: 1rem; cursor: pointer; box-shadow: 0 6px 14px rgba(0,0,0,0.08); }
+.kid-btn:active { transform: translateY(1px); }
+
+.status-box {
+  background: linear-gradient(180deg,#fff 0%, #fffbf0 100%);
+  border: 2px solid #ffd27f;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 1.05rem;
+}
+
+.hint {
+  text-align: center;
+  color: #6b6b6b;
+  margin: 8px 0 18px 0;
+  font-size: 1.05rem;
+}
+
+.story-area {
+  background: linear-gradient(180deg,#fffef9 0%, #fff4e6 100%);
+  border-radius: 12px;
+  padding: 18px;
+  font-size: 1.6rem; /* larger for kids */
+  line-height: 1.8;
+  color: #000;
+  min-height: 160px;
+  border: 3px dashed rgba(255,130,100,0.25);
+}
+
+.char { 
+  display: inline-block;
+  transition: transform 160ms ease, color 120ms ease;
+}
+
+.char-correct { color: #28a745; }
+.char-wrong { color: #e94b3c; }
+
+.char-flash {
+  animation: pop 220ms ease;
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+.finished { text-align: center; margin-top: 16px; }
+.celebrate { font-size: 1.6rem; }
+.summary { margin-top: 6px; font-size: 1.1rem; }
+
+/* Make it playful on small screens */
+@media (max-width: 640px) {
+  .title { font-size: 2rem; }
+  .story-area { font-size: 1.25rem; }
+}

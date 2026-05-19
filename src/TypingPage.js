@@ -1,15 +1,16 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import stories from './stories';
 import { useNavigate } from 'react-router-dom';
 import './TypingPage.css';
 
 const TypingPage = () => {
   const [storyText, setStoryText] = useState('');
-  const [input, setInput] = useState('');
+  const [currentInput, setCurrentInput] = useState('');
   const [mistakes, setMistakes] = useState(0);
   const [startedAt, setStartedAt] = useState(null);
   const [finishedAt, setFinishedAt] = useState(null);
   const [lastTypedIndex, setLastTypedIndex] = useState(null);
+  const [swingToggle, setSwingToggle] = useState(false);
   const audioCtxRef = useRef(null);
   const navigate = useNavigate();
 
@@ -19,7 +20,28 @@ const TypingPage = () => {
     setStoryText(selected?.content || 'No story found.');
   }, []);
 
-  // Audio helpers (generate simple tones so we don't need assets)
+  const storyWords = useMemo(() => storyText.trim().split(/\s+/).filter(Boolean), [storyText]);
+  const completedWords = useMemo(() => {
+    if (!storyText || !currentInput) return 0;
+
+    let matchLength = 0;
+    while (matchLength < currentInput.length && currentInput[matchLength] === storyText[matchLength]) {
+      matchLength += 1;
+    }
+
+    if (matchLength === 0) return 0;
+    if (matchLength >= storyText.length) return storyWords.length;
+
+    const prefix = storyText.slice(0, matchLength);
+    if (prefix.endsWith(' ')) {
+      return prefix.trim().split(/\s+/).length;
+    }
+
+    const lastSpace = prefix.lastIndexOf(' ');
+    if (lastSpace === -1) return 0;
+    return prefix.slice(0, lastSpace).trim().split(/\s+/).length;
+  }, [currentInput, storyText, storyWords.length]);
+
   const ensureAudio = useCallback(() => {
     if (!audioCtxRef.current) {
       audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
@@ -49,49 +71,54 @@ const TypingPage = () => {
     const handleKeyDown = (event) => {
       const { key } = event;
 
-      // Start timer on first real key
-      if (!startedAt && key.length === 1) setStartedAt(Date.now());
+      if (!startedAt && key.length === 1) {
+        setStartedAt(Date.now());
+      }
 
-      if (finishedAt) return; // ignore after finish
+      if (finishedAt || !storyText) return;
 
       if (key === 'Backspace') {
-        setInput((prev) => prev.slice(0, -1));
+        setCurrentInput((prev) => prev.slice(0, -1));
         setLastTypedIndex(null);
         return;
       }
 
-      if (key.length === 1 && input.length < storyText.length) {
-        const expected = storyText[input.length];
+      if (key.length === 1 && currentInput.length < storyText.length) {
+        const expected = storyText[currentInput.length];
         const correct = key === expected;
-        setInput((prev) => prev + key);
-        setLastTypedIndex(input.length);
+        const nextInput = currentInput + key;
+
+        setCurrentInput(nextInput);
+        setLastTypedIndex(currentInput.length);
+
         if (!correct) {
           setMistakes((m) => m + 1);
           playWrong();
         } else {
           playCorrect();
+          if (key === ' ' || nextInput.length === storyText.length) {
+            setSwingToggle((prev) => !prev);
+          }
+        }
+
+        if (nextInput === storyText) {
+          setFinishedAt(Date.now());
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [input, storyText, startedAt, finishedAt, playCorrect, playWrong]);
-
-  // detect finish
-  useEffect(() => {
-    if (storyText && input === storyText && !finishedAt && storyText.length > 0) {
-      setFinishedAt(Date.now());
-    }
-  }, [input, storyText, finishedAt]);
+  }, [currentInput, finishedAt, playCorrect, playWrong, startedAt, storyText]);
 
   const handleRestart = () => {
-    setInput('');
+    setCurrentInput('');
     setMistakes(0);
     setStartedAt(null);
     setFinishedAt(null);
     setLastTypedIndex(null);
-    // reselect a story
+    setSwingToggle(false);
+
     const filtered = stories.filter((s) => /^s-10-/.test(s.filename));
     const selected = filtered.length > 0 ? filtered[Math.floor(Math.random() * filtered.length)] : stories[0];
     setStoryText(selected?.content || 'No story found.');
@@ -99,15 +126,42 @@ const TypingPage = () => {
 
   const elapsedMs = finishedAt ? finishedAt - (startedAt || finishedAt) : (startedAt ? Date.now() - startedAt : 0);
   const elapsedSec = Math.max(0, Math.round(elapsedMs / 100) / 10); // 0.1s precision
+  const displayTime = startedAt ? (finishedAt ? elapsedSec : Math.round((Date.now() - startedAt) / 100) / 10) : 0;
 
   return (
     <div className="typing-page-root">
+      <div className="scene-panel">
+        <div className="sky">
+          <div className="sun" />
+          <div className="cloud cloud1" />
+          <div className="cloud cloud2" />
+          <div className="cloud cloud3" />
+        </div>
+        <div className={`ground ${finishedAt ? 'cracked' : ''}`}>
+          <div className={`egg ${completedWords > 0 ? 'egg-cracking' : ''} ${finishedAt ? 'egg-cracked' : ''}`}>
+            <div className="egg-shell" />
+            {Array.from({ length: Math.min(completedWords, 10) }, (_, index) => (
+              <div key={index} className={`egg-crack crack${index}`} />
+            ))}
+            {finishedAt && <div className="chick">🐥</div>}
+          </div>
+          <div className={`person ${swingToggle ? 'swing' : ''}`}>
+            {/* <div className="head" />
+            <div className="body" /> */}
+            <div className="axe">
+              <div className="handle" />
+              <div className="blade" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="typing-card">
         <h1 className="title">Typing Adventure</h1>
 
         <div className="controls-row">
           <div className="status-row">
-            <div className="status-box">Time: <strong>{(startedAt ? (finishedAt ? elapsedSec : Math.round((Date.now() - startedAt)/100)/10) : 0)}s</strong></div>
+            <div className="status-box">Time: <strong>{displayTime}s</strong></div>
             <div className="status-box">Mistakes: <strong>{mistakes}</strong></div>
           </div>
           <div className="action-row">
@@ -116,62 +170,57 @@ const TypingPage = () => {
           </div>
         </div>
 
-        <p className="hint">Type the story below — have fun! Backspace fixes mistakes.</p>
+        <p className="hint">Type the words below. Correct words swing the axe and crack the egg!</p>
 
         <div className="story-area">
-          {storyText.split(/(\s+)/).map((segment, wordIndex) => {
-            // Determine the starting global index of this specific word/space segment
+          {storyText.split(/(\s+)/).map((segment, segmentIndex) => {
             const segmentStartIndex = storyText.split(/(\s+)/)
-                .slice(0, wordIndex)
-                .reduce((sum, seg) => sum + seg.length, 0);
+              .slice(0, segmentIndex)
+              .reduce((sum, seg) => sum + seg.length, 0);
 
-            // If the segment is whitespace, render it normally
             if (segment.trim() === '') {
-                return Array.from(segment).map((char, charIndex) => {
+              return Array.from(segment).map((char, charIndex) => {
                 const globalIndex = segmentStartIndex + charIndex;
-                const isTyped = globalIndex < input.length;
-                const isCorrect = isTyped && input[globalIndex] === char;
+                const isTyped = globalIndex < currentInput.length;
+                const isCorrect = isTyped && currentInput[globalIndex] === char;
                 const isLast = globalIndex === lastTypedIndex;
-                
                 const classes = ['char'];
                 if (isTyped) classes.push(isCorrect ? 'char-correct' : 'char-wrong');
                 if (isLast && lastTypedIndex !== null) classes.push('char-flash');
 
                 return (
-                    <span key={`space-${globalIndex}`} className={classes.join(' ')}>
+                  <span key={`space-${globalIndex}`} className={classes.join(' ')}>
                     {'\u00A0'}
-                    </span>
+                  </span>
                 );
-                });
+              });
             }
 
-            // If the segment is a word, wrap its character spans in a word container
             return (
-                <span key={`word-${wordIndex}`} className="word-container">
+              <span key={`word-${segmentIndex}`} className="word-container">
                 {Array.from(segment).map((char, charIndex) => {
-                    const globalIndex = segmentStartIndex + charIndex;
-                    const isTyped = globalIndex < input.length;
-                    const isCorrect = isTyped && input[globalIndex] === char;
-                    const isLast = globalIndex === lastTypedIndex;
-                    
-                    const classes = ['char'];
-                    if (isTyped) classes.push(isCorrect ? 'char-correct' : 'char-wrong');
-                    if (isLast && lastTypedIndex !== null) classes.push('char-flash');
+                  const globalIndex = segmentStartIndex + charIndex;
+                  const isTyped = globalIndex < currentInput.length;
+                  const isCorrect = isTyped && currentInput[globalIndex] === char;
+                  const isLast = globalIndex === lastTypedIndex;
+                  const classes = ['char'];
+                  if (isTyped) classes.push(isCorrect ? 'char-correct' : 'char-wrong');
+                  if (isLast && lastTypedIndex !== null) classes.push('char-flash');
 
-                    return (
+                  return (
                     <span key={`char-${globalIndex}`} className={classes.join(' ')}>
-                        {char}
+                      {char}
                     </span>
-                    );
+                  );
                 })}
-                </span>
+              </span>
             );
-            })}
+          })}
         </div>
 
         {finishedAt && (
           <div className="finished">
-            <div className="celebrate">🎉 Well done! 🎉</div>
+            <div className="celebrate">🎉 The egg is cracked! 🎉</div>
             <div className="summary">You finished in <strong>{elapsedSec}s</strong> with <strong>{mistakes}</strong> mistake{mistakes === 1 ? '' : 's'}.</div>
           </div>
         )}

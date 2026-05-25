@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import stories from './stories';
 import { useNavigate } from 'react-router-dom';
 import './TypingPage.css';
+import { saveRecord } from './statsStorage';
 
 const TypingPage = () => {
   const [storyText, setStoryText] = useState('');
@@ -12,6 +13,7 @@ const TypingPage = () => {
   const [lastTypedIndex, setLastTypedIndex] = useState(null);
   const [swingToggle, setSwingToggle] = useState(false);
   const audioCtxRef = useRef(null);
+  const savedRef = useRef(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -118,6 +120,7 @@ const TypingPage = () => {
     setFinishedAt(null);
     setLastTypedIndex(null);
     setSwingToggle(false);
+    savedRef.current = false;
 
     const filtered = stories.filter((s) => /^s-10-/.test(s.filename));
     const selected = filtered.length > 0 ? filtered[Math.floor(Math.random() * filtered.length)] : stories[0];
@@ -127,6 +130,25 @@ const TypingPage = () => {
   const elapsedMs = finishedAt ? finishedAt - (startedAt || finishedAt) : (startedAt ? Date.now() - startedAt : 0);
   const elapsedSec = Math.max(0, Math.round(elapsedMs / 100) / 10); // 0.1s precision
   const displayTime = startedAt ? (finishedAt ? elapsedSec : Math.round((Date.now() - startedAt) / 100) / 10) : 0;
+
+  useEffect(() => {
+    if (!finishedAt || savedRef.current) return;
+    const record = {
+      startedAt: startedAt || finishedAt,
+      finishedAt,
+      durationMs: finishedAt - (startedAt || finishedAt),
+      mistakes,
+      createdAt: Date.now(),
+    };
+    try {
+      saveRecord(record);
+      savedRef.current = true;
+    } catch (e) {
+      // swallow storage errors
+      // eslint-disable-next-line no-console
+      console.error('Failed to save typing record', e);
+    }
+  }, [finishedAt, startedAt, mistakes]);
 
   return (
     <div className="typing-page-root">
